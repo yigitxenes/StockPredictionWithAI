@@ -37,8 +37,8 @@ targets:
     method: "rolling_std"    
 
 agent:
-  provider: "anthropic"       
-  prototype_model: "claude-sonnet-5"
+  provider: "gemini"       
+  prototype_model: "gemini-2.5-flash"
   target_local_model: "llama3.1"   
   news_lookback_days: 1
   sentiment_schema:

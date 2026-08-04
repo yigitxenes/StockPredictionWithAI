@@ -10,20 +10,19 @@ numpy>=1.26.0
 xgboost>=2.0.0
 lightgbm>=4.0.0
 scikit-learn>=1.4.0
-optuna>=3.6.0          # hiperparametre taraması (Faz 3)
+optuna>=3.6.0          
 
-# Agent / LLM (birini seçip kullanabilirsiniz)
-anthropic>=0.34.0
-openai>=1.40.0
-pydantic>=2.7.0         # sentiment JSON şema validasyonu (Faz 5)
+# Agent / LLM
+google-genai>=2.8.0
+pydantic>=2.7.0         
 
 # Raporlama
 markdown>=3.6
-weasyprint>=62.0        # Markdown -> PDF
+weasyprint>=62.0        
 
 # Arayüz (Faz 7)
 streamlit>=1.36.0
 
 # Yardımcı
-python-dotenv>=1.0.0    # API anahtarlarını .env'den okumak için
-pyyaml>=6.0.1            # config.yaml okumak için
+python-dotenv>=1.0.0    
+pyyaml>=6.0.1           
