@@ -1,0 +1,64 @@
+
+
+data:
+
+  start_date: "2020-01-01"
+  end_date: "2025-12-31"    
+  interval: "1d"               
+  tickers:
+    - "AAPL"
+    - "MSFT"
+    - "GOOGL"
+  raw_data_path: "data/raw"
+  processed_data_path: "data/processed"
+
+indicators:
+  rsi:
+    length: 14
+  macd:
+    fast: 12
+    slow: 26
+    signal: 9
+  bollinger:
+    length: 20
+    std: 2
+  atr:
+    length: 14
+  adx:
+    length: 14
+  obv: {}
+  vwap: {}
+
+targets:
+  direction:
+    horizon_days: 1          
+  volatility:
+    horizon_days: 5           
+    method: "rolling_std"    
+
+agent:
+  provider: "anthropic"       
+  prototype_model: "claude-sonnet-5"
+  target_local_model: "llama3.1"   
+  news_lookback_days: 1
+  sentiment_schema:
+    fields: ["score", "confidence", "reasoning"]
+  prompt_constraint: >
+    Sadece verilen tarihe kadarki haber metnini kullan.
+    Bu haberden sonra piyasada ne olduğunu bilmiyormuş gibi davran,
+    sonuç hakkında hiçbir çıkarım yapma.
+
+modeling:
+  models: ["xgboost", "lightgbm"]
+  validation:
+    method: "walk_forward"     # k-fold DEĞİL
+    n_splits: 5
+    expanding: true             # false ise rolling window
+  hyperparameter_search:
+    enabled: true
+    n_trials: 30
+
+leakage_checks:
+  timezone_validation: true
+  prospective_test_enabled: true
+  prospective_test_min_days: 14   # backtest sonrası en az kaç gün canlı test
