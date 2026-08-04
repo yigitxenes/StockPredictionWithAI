@@ -2,7 +2,7 @@
 venv/
 __pycache__/
 *.pyc
-.env.example
+.env
 data/raw/*
 data/processed/*
 !data/raw/.gitkeep
