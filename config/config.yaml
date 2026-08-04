@@ -30,7 +30,7 @@ indicators:
   adx:
     length: 14
   obv: {}
-  vwap: {}
+  
 
 targets:
   direction:
