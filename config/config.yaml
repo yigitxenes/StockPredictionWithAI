@@ -2,13 +2,16 @@
 
 data:
 
-  start_date: "2020-01-01"
-  end_date: "2025-12-31"    
+  start_date: "2024-01-01"
+  end_date: "2026-08-01"    
   interval: "1d"               
   tickers:
     - "AAPL"
     - "MSFT"
     - "GOOGL"
+    - "NVDA"
+    - "INTC"
+    - "ORCL"
   raw_data_path: "data/raw"
   processed_data_path: "data/processed"
 
