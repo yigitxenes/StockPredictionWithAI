@@ -1,1 +1,1 @@
-# StockPredictionWithAI
+# Stock Prediction With AI
