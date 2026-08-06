@@ -7,7 +7,6 @@ data:
   interval: "1d"               
   tickers:
     - "AAPL"
-    - "MSFT"
     - "GOOGL"
     - "NVDA"
     - "INTC"
@@ -15,6 +14,15 @@ data:
     - "META"
     - "JPM"
     - "TSLA"
+  company_names:
+    AAPL: "Apple"
+    GOOGL: "Google"
+    NVDA: "NVIDIA"
+    INTC: "Intel"
+    ORCL: "Oracle"
+    META: "Meta"
+    JPM: "JPMorgan"
+    TSLA: "Tesla"
   raw_data_path: "data/raw"
   processed_data_path: "data/processed"
 
@@ -45,7 +53,8 @@ targets:
 agent:
   provider: "gemini"       
   prototype_model: "gemini-2.5-flash"
-  target_local_model: "llama3.1"   
+  target_local_model: "llama3.1"
+  news_provider: "finnhub"
   news_lookback_days: 1
   sentiment_schema:
     fields: ["score", "confidence", "reasoning"]
