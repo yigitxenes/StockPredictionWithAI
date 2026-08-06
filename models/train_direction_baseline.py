@@ -11,7 +11,8 @@ from config.loader import load_config
 from models.walk_forward import generate_walk_forward_splits
 
 
-NON_FEATURE_COLS = ["Date", "target_direction", "target_volatility"]
+NON_FEATURE_COLS = ["Date", "target_direction", "target_volatility", "Unnamed: 0",
+                    "Open", "High", "Low", "Close"]
 
 
 def prepare_features(df):

@@ -19,6 +19,7 @@ pydantic>=2.7.0
 # Raporlama
 markdown>=3.6
 weasyprint>=62.0        
+matplotlib
 
 # Arayüz
 streamlit>=1.36.0
