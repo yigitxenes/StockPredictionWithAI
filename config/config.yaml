@@ -2,7 +2,7 @@
 
 data:
 
-  start_date: "2024-01-01"
+  start_date: "2020-01-01"
   end_date: "2026-08-01"    
   interval: "1d"               
   tickers:
@@ -12,6 +12,9 @@ data:
     - "NVDA"
     - "INTC"
     - "ORCL"
+    - "META"
+    - "JPM"
+    - "TSLA"
   raw_data_path: "data/raw"
   processed_data_path: "data/processed"
 
@@ -54,9 +57,9 @@ agent:
 modeling:
   models: ["xgboost", "lightgbm"]
   validation:
-    method: "walk_forward"     # k-fold DEĞİL
+    method: "walk_forward"     
     n_splits: 5
-    expanding: true             # false ise rolling window
+    expanding: true             # if false rolling window
   hyperparameter_search:
     enabled: true
     n_trials: 30
@@ -64,4 +67,4 @@ modeling:
 leakage_checks:
   timezone_validation: true
   prospective_test_enabled: true
-  prospective_test_min_days: 14   # backtest sonrası en az kaç gün canlı test
+  prospective_test_min_days: 14   
