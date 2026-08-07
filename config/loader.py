@@ -1,12 +1,4 @@
-"""
-Merkezi config okuyucu.
-Tüm modüller tarih/hisse/parametre değerlerini buradan almalı.
 
-Kullanım:
-    from config.loader import load_config
-    cfg = load_config()
-    cfg["data"]["tickers"]
-"""
 import os
 import yaml
 
@@ -21,5 +13,5 @@ def load_config(path: str = _CONFIG_PATH) -> dict:
 if __name__ == "__main__":
     cfg = load_config()
     print("Tickers:", cfg["data"]["tickers"])
-    print("Tarih aralığı:", cfg["data"]["start_date"], "->", cfg["data"]["end_date"])
-    print("Validasyon yöntemi:", cfg["modeling"]["validation"]["method"])
+    print("Date Interval:", cfg["data"]["start_date"], "->", cfg["data"]["end_date"])
+    print("Validation Method:", cfg["modeling"]["validation"]["method"])
