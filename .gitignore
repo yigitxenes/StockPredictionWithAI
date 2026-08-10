@@ -14,5 +14,5 @@ reports/*.pdf
 .DS_Store
 data/raw_sentiment_backtest/*
 data/processed_sentiment_backtest/*
-data/raw_sentiment_backtest/.gitkeep
-data/processed_sentiment_backtest/.gitkeep
+!data/raw_sentiment_backtest/.gitkeep
+!data/processed_sentiment_backtest/.gitkeep
