@@ -42,8 +42,8 @@ data:
     - "HD"
     - "AXP"
     - "AVGO"
-  sentiment_backtest_start: "2018-10-25"
-  sentiment_backtest_end: "2020-06-08"
+  sentiment_backtest_start: "2018-10-01"
+  sentiment_backtest_end: "2024-12-31"
 
 indicators:
   rsi:

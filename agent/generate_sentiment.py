@@ -177,16 +177,34 @@ def append_result(row):
     df_row = pd.DataFrame([row])
     df_row.to_csv(OUTPUT_FILE, mode="a", header= not file_exists, index= False)
     
+def load_combined_news(cfg):
+    fnspid_df = pd.read_csv("data/raw/fnspid_filtered.csv")
+    fnspid_df["Date"] = pd.to_datetime(fnspid_df["Date"], errors="coerce", utc=True)
 
+    av_path = "data/raw/alphavantage_filtered.csv"
+    if os.path.exists(av_path):
+        av_df = pd.read_csv(
+            av_path, header=None,
+            names=["Date", "Article_title", "Stock_symbol", "Publisher", "Article"],
+        )
+        av_df["Date"] = pd.to_datetime(av_df["Date"], format="%Y%m%d", errors="coerce", utc=True)
+        combined = pd.concat([fnspid_df, av_df], ignore_index=True)
+    else:
+        combined = fnspid_df
 
+    before = len(combined)
+    combined = combined.drop_duplicates(subset=["Date", "Article_title", "Stock_symbol"])
+    if len(combined) < before:
+        print(f"Birlesirken {before - len(combined)} tekrar temizlendi (FNSPID/AV sinir bolgesi)")
+
+    return combined
 def main():
     cfg = load_config()
     api_key = os.getenv("GOOGLE_API_KEY")
     model_name = cfg["agent"]["prototype_model"]
     client = genai.Client(api_key= api_key)
     
-    news_df = pd.read_csv("data/raw/fnspid_filtered.csv")
-    news_df["Date"] = pd.to_datetime(news_df["Date"], errors= "coerce")
+    news_df = load_combined_news(cfg)
     backtest_start = pd.Timestamp(cfg["data"]["sentiment_backtest_start"], tz="UTC")
     backtest_end = pd.Timestamp(cfg["data"]["sentiment_backtest_end"], tz="UTC")
     news_df = news_df[(news_df["Date"] >= backtest_start) & (news_df["Date"] <= backtest_end)]
