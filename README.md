@@ -39,9 +39,9 @@ Financial time-series ML is notoriously easy to get wrong via data leakage. This
 ├── data/
 │ ├── raw / processed # main technical dataset (2020–present)
 │ ├── raw_sentiment_backtest/
-│ └── processed_sentiment_backtest/ # narrow-window dataset aligned with FNSPID coverage
+│ └── processed_sentiment_backtest/ # narrow-window dataset aligned with FNSPID, Alphavantage coverage
 ├── features/ # data fetching, cleaning, indicators, targets
-├── agent/ # news fetching (Finnhub) + LLM sentiment generation (Gemini)
+├── agent/ # news fetching (Finnhub, AlphaVantage) + LLM sentiment generation (Gemini)
 ├── models/ # walk-forward CV, XGBoost/LightGBM training, evaluation
 ├── tests/ # look-ahead bias test, data integrity checks
 ├── config/
