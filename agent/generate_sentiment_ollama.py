@@ -4,6 +4,7 @@ import json
 import time
 import pandas as pd
 import requests
+import re
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from config.loader import load_config
@@ -48,10 +49,12 @@ ONDALIKLI sayilar olmali. ORNEK dogru degerler: -0.7, -0.2, 0.0, 0.35, 0.9.
 {articles_text}
 
 Bu haberlere dayanarak {ticker} icin genel bir sentiment skoru, guven skoru,
-kisa bir gerekce ve her haber icin ayri bir skor uret. SADECE JSON dondur,
-baska hicbir metin ekleme."""
+kisa bir gerekce ve her haber icin ayri bir skor uret. article_scores
+dizisinin uzunlugu, yukarida verilen haber sayisiyla (bu istekte {n_articles}
+haber var) BIREBIR ayni olmali - her haber icin tam olarak bir skor uret,
+ne eksik ne fazla. SADECE JSON dondur, baska hicbir metin ekleme."""
 
-RETRY_PROMPT_SUFFIX = "\n\nUYARI: Onceki cevabinda skorlari YANLIS olcekte vermis olabilirsin (orn. 1-10 arasi tam sayilar). Skorlar SADECE -1.0 ile 1.0 arasinda ONDALIKLI olmali. Dogru ornekler: 0.6, -0.4, 0.15, -0.9. Haberi tekrar oku ve DOGRU olcekte skorla."
+RETRY_PROMPT_SUFFIX = "\n\nUYARI: Onceki cevabinda skorlari YANLIS olcekte vermis olabilirsin (orn. 1-10 arasi tam sayilar) ya da article_scores uzunlugu haber sayisiyla uyusmuyor olabilir. Skorlar SADECE -1.0 ile 1.0 arasinda ONDALIKLI olmali ve article_scores'ta TAM OLARAK haber sayisi kadar eleman olmali. Dogru ornekler: 0.6, -0.4, 0.15, -0.9. Haberi tekrar oku ve DOGRU olcekte, DOGRU sayida skorla."
 OUTPUT_FILE = "data/processed_sentiment_backtest/sentiment_scores.csv"
 DEBUG_FAILURES_FILE = "data/processed_sentiment_backtest/ollama_failures_debug.jsonl"
 
@@ -71,12 +74,14 @@ def build_articles_text(articles: list) -> str:
 
 def generate_single_ticker_sentiment(ticker, date_str, articles, temperature=0.1, extra_instruction=""):
     """Basarili olursa (parsed_json, raw_content) donderir."""
-    articles_text = build_articles_text(articles[:MAX_ARTICLES_PER_REQUEST])
+    used_articles = articles[:MAX_ARTICLES_PER_REQUEST]
+    articles_text = build_articles_text(used_articles)
 
     prompt = PROMPT_TEMPLATE.format(
         ticker=ticker,
         date=date_str,
         articles_text=articles_text,
+        n_articles=len(used_articles),
     )
     prompt += extra_instruction
 
@@ -97,15 +102,17 @@ def generate_single_ticker_sentiment(ticker, date_str, articles, temperature=0.1
     content = data["message"]["content"]
     return json.loads(content), content
 
-
-def is_degenerate(t_res):
+CJK_PATTERN = re.compile(r'[\u4e00-\u9fff\u3040-\u30ff]')
+def is_degenerate(t_res, expected_article_count):
     reasoning = (t_res.get("reasoning") or "").strip()
     score = t_res.get("overall_score", 0)
     confidence = t_res.get("overall_confidence", 0)
     article_scores = t_res.get("article_scores", [])
-
+    has_foreign_script = bool(CJK_PATTERN.search(reasoning)) 
     reasoning_missing = len(reasoning) < 15
     zero_signal = (score == 0 and confidence == 0)
+
+    count_mismatch = len(article_scores) != expected_article_count
 
     try:
         out_of_range = (
@@ -116,7 +123,7 @@ def is_degenerate(t_res):
     except (TypeError, ValueError):
         out_of_range = True
 
-    return reasoning_missing or zero_signal or out_of_range
+    return reasoning_missing or zero_signal or out_of_range or count_mismatch or has_foreign_script
 
 
 def log_failure(ticker, date_str, raw_content, reason):
@@ -160,7 +167,7 @@ def load_combined_news(cfg):
     before = len(combined)
     combined = combined.drop_duplicates(subset=["Date", "Article_title", "Stock_symbol"])
     if len(combined) < before:
-        print(f"Birlesirken {before - len(combined)} tekrar temizlendi (FNSPID/AV sinir bolgesi)")
+        print(f"Cleaned while combining {before - len(combined)}")
 
     return combined
 
@@ -182,24 +189,20 @@ def _write_row(ticker, date_str, articles, t_res):
 
 
 def process_one_group(ticker, date_str, articles):
-    """Bir (ticker, gun) grubunu isler. Basarili olursa CSV'ye yazar ve
-    (True, None) doner. Basarisiz olursa (iki denemeden sonra) debug
-    log'a yazar ve (False, sebep) doner."""
 
-    # 1. deneme -- dusuk sicaklik, standart prompt
+    used_article_count = min(len(articles), MAX_ARTICLES_PER_REQUEST)
+
     try:
         t_res, raw = generate_single_ticker_sentiment(ticker, date_str, articles, temperature=0.1)
     except (requests.RequestException, json.JSONDecodeError, KeyError) as e:
-        log_failure(ticker, date_str, None, f"istek/parse hatasi: {type(e).__name__}: {e}")
-        return False, "istek_hatasi"
+        log_failure(ticker, date_str, None, f"Request Error: {type(e).__name__}: {e}")
+        return False, "request_error"
 
-    if not is_degenerate(t_res):
-        _write_row(ticker, date_str, articles, t_res)
+    if not is_degenerate(t_res, used_article_count):
+        _write_row(ticker, date_str, articles[:MAX_ARTICLES_PER_REQUEST], t_res)
         return True, None
 
-    # 2. deneme -- dejenereyse, hem sicakligi artir hem promptu netlestir
-    # (sadece sicaklik degistirmenin ayni takilmayi tekrarladigi gozlemlendi)
-    log_failure(ticker, date_str, raw, "dejenere (1. deneme, temp=0.1)")
+    log_failure(ticker, date_str, raw, "degenerate 1.try (temp = 0.1)")
     try:
         t_res_retry, raw_retry = generate_single_ticker_sentiment(
             ticker, date_str, articles,
@@ -207,15 +210,15 @@ def process_one_group(ticker, date_str, articles):
             extra_instruction=RETRY_PROMPT_SUFFIX,
         )
     except (requests.RequestException, json.JSONDecodeError, KeyError) as e:
-        log_failure(ticker, date_str, None, f"retry istek/parse hatasi: {type(e).__name__}: {e}")
-        return False, "istek_hatasi"
+        log_failure(ticker, date_str, None, f"retry request error: {type(e).__name__}: {e}")
+        return False, "request_error"
 
-    if not is_degenerate(t_res_retry):
-        _write_row(ticker, date_str, articles, t_res_retry)
+    if not is_degenerate(t_res_retry, used_article_count):
+        _write_row(ticker, date_str, articles[:MAX_ARTICLES_PER_REQUEST], t_res_retry)
         return True, None
 
-    log_failure(ticker, date_str, raw_retry, f"dejenere (2. deneme, temp={RETRY_TEMPERATURE}, retry-prompt)")
-    return False, "dejenere"
+    log_failure(ticker, date_str, raw_retry, f"degenerate (2. try, temp={RETRY_TEMPERATURE}, retry-prompt)")
+    return False, "degenerate"
 
 
 def main():
@@ -261,27 +264,27 @@ def main():
         else:
             error_count += 1
             consecutive_errors += 1
-            if fail_reason == "dejenere":
+            if fail_reason == "degenerate":
                 degenerate_count += 1
             else:
                 request_error_count += 1
-            print(f"Hata ticker={ticker}, date={date_str} : {fail_reason} ({elapsed:.1f}sn)")
+            print(f"Error ticker={ticker}, date={date_str} : {fail_reason} ({elapsed:.1f}sec)")
 
             if consecutive_errors > 30:
-                print("Cok fazla ARDISIK hata, script durduruluyor (Ollama askida olabilir).")
+                print("Too many consecutive mistakes, script is shutting down.")
                 break
 
         total_processed = processed_groups + error_count
         if total_processed % 10 == 0:
             total_elapsed = time.time() - start_time
             rate = total_processed / total_elapsed * 60
-            print(f"  {processed_groups} basarili / {total_processed} denenen, "
-                  f"hiz ~{rate:.1f} grup/dk, "
-                  f"Hata: {error_count} (dejenere: {degenerate_count}, istek: {request_error_count})")
+            print(f"  {processed_groups} successfull / {total_processed} tried, "
+                  f"speed ~{rate:.1f} group/min, "
+                  f"Error: {error_count} (degenerate: {degenerate_count}, request: {request_error_count})")
 
-    print(f"\nBu oturumda: {processed_groups} basarili, {error_count} hata "
-          f"(dejenere: {degenerate_count}, istek: {request_error_count})")
-    print(f"Toplam ilerleme: {len(already_processed) + processed_groups}/{total_groups}")
+    print(f"\nThis session: {processed_groups} success, {error_count} error "
+          f"(degenerate: {degenerate_count}, request: {request_error_count})")
+    print(f"Total Progress: {len(already_processed) + processed_groups}/{total_groups}")
 
 
 if __name__ == "__main__":

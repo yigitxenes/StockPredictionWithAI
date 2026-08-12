@@ -3,6 +3,7 @@ import sys
 import json
 import pandas as pd
 import time
+import re
 
 from google import genai
 from google.genai import types
@@ -72,7 +73,9 @@ haberlerini kullanma, her hisseyi bagimsiz degerlendir.
 
 Her hisse icin: kendi haberlerinin ayri skorunu ve o hisse icin toplu bir
 skor uret. Cikan "tickers" array'inin sirasi ve ticker etiketleri girdiyle
-BIREBIR ayni olmali."""
+BIREBIR ayni olmali. article_scores dizisinin uzunlugu, o hisseye verilen
+haber sayisiyla BIREBIR ayni olmali - her haber icin tam olarak bir skor
+uret, ne eksik ne fazla."""
 
 TICKER_BLOCK_TEMPLATE = """### Hisse {i}: {ticker}
 {articles_text}"""
@@ -195,9 +198,46 @@ def load_combined_news(cfg):
     before = len(combined)
     combined = combined.drop_duplicates(subset=["Date", "Article_title", "Stock_symbol"])
     if len(combined) < before:
-        print(f"Birlesirken {before - len(combined)} tekrar temizlendi (FNSPID/AV sinir bolgesi)")
+        print(f"Cleaned while combining {before - len(combined)}")
 
     return combined
+
+CJK_PATTERN = re.compile(r'[\u4e00-\u9fff\u3040-\u30ff]')
+def validate_ticker_result(expected_ticker, articles, t_res):
+
+
+    if t_res.get("ticker") != expected_ticker:
+        raise ValueError(f"Expected {expected_ticker}, Result {t_res.get('ticker')}")
+
+    article_scores = t_res.get("article_scores", [])
+    if len(article_scores) != len(articles):
+        raise ValueError(
+            f"{expected_ticker}: article_scores length ({len(article_scores)}) "
+            f"doens't match the real news number({len(articles)}) "
+        )
+
+    overall_score = t_res.get("overall_score")
+    overall_confidence = t_res.get("overall_confidence")
+    reasoning = t_res.get("reasoning", "")
+    if CJK_PATTERN.search(reasoning):
+        raise ValueError(f"{expected_ticker}: Unexcepted script in the reasoning(CFK)")
+    try:
+        overall_score = float(overall_score)
+        overall_confidence = float(overall_confidence)
+        article_scores = [float(s) for s in article_scores]
+    except (TypeError, ValueError):
+        raise ValueError(f"{expected_ticker}: Non integer score/confidince value")
+
+    if not (-1 <= overall_score <= 1):
+        raise ValueError(f"{expected_ticker}: overall_score outside of the interval: {overall_score}")
+    if not (0 <= overall_confidence <= 1):
+        raise ValueError(f"{expected_ticker}: overall_confidence outside of the interval: {overall_confidence}")
+    if any(not (-1 <= s <= 1) for s in article_scores):
+        raise ValueError(f"{expected_ticker}: article_scores has a value outside of the interval: {article_scores}")
+
+    return overall_score, overall_confidence, article_scores
+
+
 def main():
     cfg = load_config()
     api_key = os.getenv("GOOGLE_API_KEY")
@@ -251,19 +291,17 @@ def main():
                 )
 
             for (expected_ticker, articles), t_res in zip(ticker_batch, tickers_result):
-                if t_res.get("ticker") != expected_ticker:
-                    raise ValueError(
-                        f"Expected {expected_ticker}, Result {t_res.get('ticker')}"
-                    )
+                overall_score, overall_confidence, article_scores = validate_ticker_result(
+                    expected_ticker, articles, t_res
+                )
 
-                article_scores = t_res.get("article_scores", [])
                 sentiment_std = pd.Series(article_scores).std() if len(article_scores) > 1 else 0.0
 
                 row = {
                     "ticker": expected_ticker,
                     "date": date_str,
-                    "sentiment_score": t_res["overall_score"],
-                    "sentiment_confidence": t_res["overall_confidence"],
+                    "sentiment_score": overall_score,
+                    "sentiment_confidence": overall_confidence,
                     "news_count_daily": len(articles),
                     "sentiment_std": sentiment_std,
                     "reasoning": t_res["reasoning"],
