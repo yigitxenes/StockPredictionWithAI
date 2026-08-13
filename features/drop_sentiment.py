@@ -1,8 +1,8 @@
 import pandas as pd
 import re
 
-INPUT_PATH = "sentiment_scores.csv"
-OUTPUT_PATH = "sentiment_scores.csv"
+INPUT_PATH = "data\processed_sentiment_backtest\sentiment_scores.csv"
+OUTPUT_PATH = "data\processed_sentiment_backtest\sentiment_scores.csv"
 
 def has_cjk(text):
     return bool(re.search(r'[\u4e00-\u9fff\u3040-\u30ff]', str(text)))
