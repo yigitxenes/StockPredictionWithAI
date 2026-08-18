@@ -29,6 +29,7 @@ KESIN KURALLAR:
   bulunamadi" de.
 - Kac haber TARANDIGINI (degerlendirilen sayi) belirt, "bulunan toplam" ile
   karistirma -- bunlar farkli olabilir.
+- RSI, MACD, ADX verilerinin ne anlama geldiğini de anlat. ne kadar olumlu momentum miktarlarını da belirt.
 
 VERILER:
 - Bu rapor su tarihe ait en guncel piyasa kapanisina dayanmaktadir: {as_of_date}

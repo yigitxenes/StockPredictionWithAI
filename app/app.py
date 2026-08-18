@@ -7,14 +7,16 @@ from plotly.subplots import make_subplots
 from google import genai
 from dotenv import load_dotenv
 
+
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from config.loader import load_config
 from agent.write_report import generate_report, load_performance_summary
 from agent.live_data_fetch import get_live_technical_data
+from ticker_panel import render_ticker_panel, render_market_board, inject_ticker_css
 
 load_dotenv()
 
-st.set_page_config(page_title="Sinyal Sisi | Hisse Analiz Raporu", page_icon="◐", layout="wide")
+st.set_page_config(page_title="Borsa Asistanı | Hisse Analiz Raporu", page_icon="◐", layout="wide")
 
 # ============================================================
 # TASARIM SISTEMI
@@ -288,15 +290,16 @@ def get_config():
 
 def main():
     inject_css()
+    inject_ticker_css()
     cfg = get_config()
     perf = load_performance_summary()
 
-    st.markdown('<div class="hero-title">◐ Sinyal Sisi</div>', unsafe_allow_html=True)
+    st.markdown('<div class="hero-title">◐ Borsa Asistanı</div>', unsafe_allow_html=True)
     st.markdown(
         '<div class="hero-sub">Şeffaf hisse analiz aracı — kesin tahmin değil, ölçülmüş belirsizlikle raporlama.</div>',
         unsafe_allow_html=True,
     )
-
+    render_ticker_panel(cfg)
     render_reliability_banner(perf)
 
     tickers = cfg["data"]["tickers"]
@@ -358,7 +361,7 @@ def main():
         with st.expander("Sentiment gerekçesi (ham)"):
             st.write(sentiment["reasoning"])
     else:
-        st.info("Bir hisse seçip **Rapor Oluştur**'a basarak analizi başlatabilirsin.")
+        render_market_board(cfg)
 
 
 if __name__ == "__main__":
