@@ -44,6 +44,28 @@ data:
     - "AVGO"
   sentiment_backtest_start: "2018-10-01"
   sentiment_backtest_end: "2024-12-31"
+  sentiment_output_path: "data/processed_sentiment_backtest/sentiment_scores.csv"
+
+  cross_asset_tickers:
+    market: ["SPY", "QQQ"]
+    volatility: ["^VIX"]
+    macro: ["UUP", "^TNX"]
+
+  sector_map:
+    AVGO: "XLK"
+    NVDA: "XLK"
+    INTC: "XLK"
+    ORCL: "XLK"
+    GOOGL: "XLK"
+    JPM: "XLF"
+    AXP: "XLF"
+    HD: "XLY"
+    GILD: "XLV"
+    OXY: "XLE"
+    TSLA: "XLY"
+
+sentiment_features:
+  ema_span: 5
 
 indicators:
   rsi:
@@ -86,11 +108,13 @@ modeling:
   models: ["xgboost", "lightgbm"]
   validation:
     method: "walk_forward"     
-    n_splits: 5
+    n_splits: 10
     expanding: true             # if false rolling window
   hyperparameter_search:
     enabled: true
     n_trials: 30
+    n_inner_splits: 3
+  dataset_file: "combined_datasets_with_sentiments_and_crossasset.csv"
 
 leakage_checks:
   timezone_validation: true

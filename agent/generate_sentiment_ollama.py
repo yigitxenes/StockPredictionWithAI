@@ -40,7 +40,9 @@ ile ilgili {date} tarihinde yayinlanmis haberler var.
 
 ONEMLI KURAL: SADECE bu tarihte verilen haberleri kullan. Bu haberlerden
 SONRA piyasada ne oldugunu bilmiyormus gibi davran, gelecege dair hicbir
-cikarim yapma - sadece haberin kendi icerigine dayanarak sentiment belirle.
+cikarim yapma - sadece haberin kendi icerigine dayanarak sentiment belirle. Eger verilen haberlerin hicbiri bu ticker ile DOGRUDAN ilgili degilse,
+overall_score=0.0 ve overall_confidence=0.0 dondur (bu, 'gercek sinyal yok'
+anlamina gelir ve veri setine dahil edilmeyecektir).
 
 SKOR OLCEGI: Tum skorlar -1.0 (cok negatif) ile +1.0 (cok pozitif) arasinda
 ONDALIKLI sayilar olmali. ORNEK dogru degerler: -0.7, -0.2, 0.0, 0.35, 0.9.

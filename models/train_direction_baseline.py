@@ -54,7 +54,7 @@ def main():
     processed_path = cfg["data"]["processed_data_path"]
     n_splits = cfg["modeling"]["validation"]["n_splits"]
     
-    combined_path = os.path.join(processed_path, "combined_datasets.csv")
+    combined_path = os.path.join(processed_path, "combined_datasets_with_sentiments.csv")
     df = pd.read_csv(combined_path, parse_dates=["Date"])
     
     #We perform one-hot encoding on the entire dataset once

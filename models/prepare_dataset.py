@@ -32,7 +32,7 @@ def main():
     
     combined = combine_datasets(tickers, processed_path)
     
-    out_file = os.path.join(processed_path, "combined_datasets.csv")
+    out_file = os.path.join(processed_path, "combined_datasets_with_sentiments.csv")
     combined.to_csv(out_file, index = False)
     
     print(f"Out File Created Successfully : {out_file}")

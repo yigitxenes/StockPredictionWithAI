@@ -90,7 +90,7 @@ def main():
     os.makedirs(reports_path, exist_ok=True)
     n_splits = cfg["modeling"]["validation"]["n_splits"]
 
-    combined_path = os.path.join(processed_path, "combined_datasets.csv")
+    combined_path = os.path.join(processed_path, "combined_datasets_with_sentiments.csv")
     df = pd.read_csv(combined_path, parse_dates=["Date"])
     df_encoded = prepare_features(df)
     feature_cols = get_feature_columns(df_encoded)
