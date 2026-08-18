@@ -1,29 +1,32 @@
-# Veri çekme
+# Data fetching
 yfinance>=0.2.40
+requests>=2.31.0
 
 # Feature engineering
 pandas-ta>=0.3.14b0
 pandas>=2.0.0
 numpy>=1.26.0
 
-# Modelleme
+# Modeling
 xgboost>=2.0.0
 lightgbm>=4.0.0
 scikit-learn>=1.4.0
-optuna>=3.6.0          
+optuna>=3.6.0
+joblib>=1.3.0
 
 # Agent / LLM
 google-genai>=2.8.0
-pydantic>=2.7.0         
+pydantic>=2.7.0
 
-# Raporlama
+# Reporting
 markdown>=3.6
-weasyprint>=62.0        
-matplotlib
+matplotlib>=3.8.0
 
-# Arayüz
+# Frontend
 streamlit>=1.36.0
+plotly>=5.20.0
+kaleido>=0.2.1
 
-# Yardımcı
-python-dotenv>=1.0.0    
-pyyaml>=6.0.1           
+# Helper
+python-dotenv>=1.0.0
+pyyaml>=6.0.1
