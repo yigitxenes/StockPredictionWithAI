@@ -132,4 +132,4 @@ Run the web app:
 streamlit run app/app.py
 ```
 
-Full experimental writeup (all figures, per-fold statistics, methodology): `reports/Proje_Sunum_Raporu_v5_Bulgular.docx`
+Full experimental writeup (all figures, per-fold statistics, methodology): `reports/Project_Report.md`
